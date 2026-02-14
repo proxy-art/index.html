@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Cookie Clicker Avancé avec Zone Secrète</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    user-select: none;
+  }
+  html, body {
+    height: 100%;
+    background: linear-gradient(135deg, #ffb347, #ffcc33);
+    font-family: 'Press Start 2P', cursive, monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  #game-container {
+    background: #704214;
+    width: 350px;
+    height: 600px;
+    border-radius: 20px;
+    box-shadow:
+      inset 0 0 30px #d2a14c,
+      0 8px 20px rgba(113, 34, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: #f9d976;
+    position: relative;
+  }
+  h1 {
+    font-size: 18px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    color: #d7a600;
+    text-shadow: 1px 1px 0 #5a3300;
+    text-align: center;
+  }
+  #cookie-count {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffeb99;
+    text-shadow:
+      1px 1px 2px #7a5300,
+      0 0 8px #fbc02d;
+    margin-bottom: 15px;
+    user-select: all;
+  }
+  #cookie-button {
+    background: radial-gradient(circle at center, #ffb347 0%, #cd7f32 80%);
+    border-radius: 50%;
+    width: 220px;
+    height: 220px;
+    border: 8px solid #db9e3b;
+    box-shadow: 0 15px 20px #aa751d;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.1s ease;
+  }
+  #cookie-button:active {
+    transform: scale(0.95);
+  }
+  .chip {
+    position: absolute;
+    background: #4d2e02;
+    border-radius: 50%;
+    box-shadow: inset 0 0 4px #3a2201;
+  }
+  .chip1 { width: 24px; height: 16px; top: 50px; left: 100px; transform: rotate(20deg); }
+  .chip2 { width: 18px; height: 14px; top: 130px; left: 70px; transform: rotate(-22deg);}
+  .chip3 { width: 16px; height: 16px; top: 40px; left: 160px; }
+  .chip4 { width: 12px; height: 16px; top: 140px; left: 160px; transform: rotate(45deg);}
+  .chip5 { width: 14px; height: 18px; top: 100px; left: 125px; transform: rotate(-45deg); }
+  #upgrades {
+    margin-top: 15px;
+    width: 100%;
+    max-height: 140px;
+    overflow-y: auto;
+    padding-right: 6px;
+    border-radius: 12px;
+    border: 2px solid #a57a00;
+    background: #7f5f10cc;
+  }
+  .upgrade {
+    background: linear-gradient(135deg, #a06a00, #f3ca4d);
+    border-radius: 12px;
+    margin: 6px 8px;
+    padding: 10px 14px;
+    color: #3c2200;
+    font-weight: 700;
+    box-shadow:
+      0 4px 8px rgba(172, 115, 0, 0.6);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .upgrade:hover:not(.disabled) {
+    background: linear-gradient(135deg, #f3ca4d, #a06a00);
+  }
+  .upgrade.disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .upgrade .name {
+    flex: 1;
+    padding-right: 8px;
+  }
+  .upgrade .cost {
+    min-width: 65px;
+    text-align: right;
+    color: #542e00;
+  }
+  #stats {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #f3d976aa;
+    text-align: center;
+  }
+  #boost-button {
+    margin-top: 12px;
+    padding: 10px 28px;
+    font-family: 'Press Start 2P', cursive, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(45deg,#d09e0a,#a87005);
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 5px 10px #8a6700;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.25s ease;
+  }
+  #boost-button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  #secret-zone {
+    margin-top: 15px;
+    background: linear-gradient(135deg, #f7d874, #d1b21d);
+    border-radius: 15px;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    color: #4a3700;
+    box-shadow: 0 4px 10px #c9a701;
+    user-select: none;
+    display: none;
+    text-align: center;
+    transition: background 0.3s ease;
+  }
+  #secret-zone:hover {
+    background: linear-gradient(135deg, #fbe77a, #debc2d);
+  }
+  #message {
+    font-size: 12px;
+    color: #ffeeaa;
+    text-align: center;
+    margin-top: 8px;
+    height: 18px;
+    min-height: 18px;
+    user-select: none;
+    text-shadow: 1px 1px 2px #825d00;
+  }
+  #footer {
+    position: absolute;
+    bottom: 12px;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    color: #d7a600a0;
+    font-weight: 700;
+    user-select: none;
+  }
+  #upgrades::-webkit-scrollbar {
+    width: 6px;
+  }
+  #upgrades::-webkit-scrollbar-track {
+    background: #604214;
+    border-radius: 3px;
+  }
+  #upgrades::-webkit-scrollbar-thumb {
+    background: #b89f4c;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+<div id="game-container" role="main" aria-label="Jeu Cookie Clicker Avancé avec Zone Secrète">
+  <h1>Cookie Clicker Avancé</h1>
+  <div id="cookie-count" aria-live="polite" aria-atomic="true" aria-relevant="text">0 Cookies</div>
+  <button id="cookie-button" aria-label="Cliquer sur le cookie pour gagner des cookies">
+    <div class="chip chip1"></div>
+    <div class="chip chip2"></div>
+    <div class="chip chip3"></div>
+    <div class="chip chip4"></div>
+    <div class="chip chip5"></div>
+  </button>
+  <div id="upgrades" aria-label="Boutons d'amélioration pour gagner plus de cookies"></div>
+  <button id="boost-button" aria-label="Active un multiplicateur temporaire de cookies" title="Boost de cookies x2 pour 30 secondes">BOOST x2 (30s)</button>
+  <div id="secret-zone" role="button" tabindex="0" aria-label="Zone secrète pour gagner 20 000 cookies"> Zone Secrète <br/>Cliquez ici pour gagner 20 000 cookies</div>
+  <div id="message" aria-live="polite" aria-atomic="true"></div>
+  <div id="stats" aria-live="polite" aria-atomic="true"></div>
+  <div id="footer">Développé par BLACKBOXAI</div>
+</div>
+<script>
+(() => {
+  const cookieCountElem = document.getElementById('cookie-count');
+  const cookieButton = document.getElementById('cookie-button');
+  const upgradesContainer = document.getElementById('upgrades');
+  const boostButton = document.getElementById('boost-button');
+  const secretZone = document.getElementById('secret-zone');
+  const messageElem = document.getElementById('message');
+  const statsElem = document.getElementById('stats');
+
+  let cookies = 0;
+  let cookiesPerClick = 1;
+  let baseCookiesPerClick = 1;
+  let cookiesPerSecond = 0;
+  let baseCookiesPerSecond = 0;
+  let multiplier = 1;
+
+  let boostsAvailable = 1;
+  let boostActive = false;
+  let boostDurationMs = 30 * 1000;
+  let boostCooldownMs = 60 * 1000;
+  let boostCooldown = 0;
+
+  // Keys and zone unlock
+  let keysOwned = 0;
+  let zoneUnlocked = false;
+
+  // Define upgrades including the new key
+  const upgrades = [
+    {
+      id: 'click1',
+      name: '+1 cookie par clic',
+      baseCost: 15,
+      cost: 15,
+      cpsInc: 0,
+      cpcInc: 1,
+      owned: 0,
+      maxOwned: 50,
+    },
+    {
+      id: 'click5',
+      name: '+5 cookies par clic',
+      baseCost: 100,
+      cost: 100,
+      cpsInc: 0,
+      cpcInc: 5,
+      owned: 0,
+      maxOwned: 25,
+    },
+    {
+      id: 'auto1',
+      name: '+1 cookie/seconde',
+      baseCost: 50,
+      cost: 50,
+      cpsInc: 1,
+      cpcInc: 0,
+      owned: 0,
+      maxOwned: 50,
+    },
+    {
+      id: 'auto5',
+      name: '+5 cookies/seconde',
+      baseCost: 500,
+      cost: 500,
+      cpsInc: 5,
+      cpcInc: 0,
+      owned: 0,
+      maxOwned: 25,
+    },
+    {
+      id: 'grandma',
+      name: 'Grand-maman +10 cookies/seconde',
+      baseCost: 2500,
+      cost: 2500,
+      cpsInc: 10,
+      cpcInc: 0,
+      owned: 0,
+      maxOwned: 10,
+    },
+    {
+      id: 'farm',
+      name: 'Ferme +50 cookies/seconde',
+      baseCost: 15000,
+      cost: 15000,
+      cpsInc: 50,
+      cpcInc: 0,
+      owned: 0,
+      maxOwned: 5,
+    },
+    {
+      id: 'factory',
+      name: 'Usine +200 cookies/seconde',
+      baseCost: 100000,
+      cost: 100000,
+      cpsInc: 200,
+      cpcInc: 0,
+      owned: 0,
+      maxOwned: 3,
+    },
+    {
+      id: 'key',
+      name: 'Clé pour zone secrète',
+      baseCost: 1000000,
+      cost: 1000000,
+      cpsInc: 0,
+      cpcInc: 0,
+      owned: 0,
+      maxOwned: 10,
+    },
+  ];
+
+  function formatNumber(num) {
+    if(num >= 1e9) {
+      return (num/1e9).toFixed(2) + 'B';
+    } else if(num >= 1e6) {
+      return (num/1e6).toFixed(2) + 'M';
+    } else if(num >= 1e3) {
+      return (num/1e3).toFixed(1) + 'K';
+    } else {
+      return num.toLocaleString('fr-FR');
+    }
+  }
+
+  function updateCookieCount() {
+    const displayedCookies = Math.floor(cookies);
+    const multiplierText = multiplier > 1 ? ` x${multiplier}` : '';
+    cookieCountElem.textContent = `${formatNumber(displayedCookies)} Cookie${displayedCookies !== 1 ? 's' : ''}${multiplierText}`;
+  }
+
+  function renderUpgrades() {
+    upgradesContainer.innerHTML = '';
+    upgrades.forEach(upg => {
+      const upgEl = document.createElement('button');
+      upgEl.className = 'upgrade';
+      let affordable = cookies >= upg.cost && upg.owned < (upg.maxOwned || Infinity);
+      // For the key purchase, disable if zone unlocked and maxOwned reached
+      if(upg.id === 'key') {
+        affordable = cookies >= upg.cost && upg.owned < (upg.maxOwned || Infinity);
+      }
+      if(!affordable) {
+        upgEl.classList.add('disabled');
+        upgEl.setAttribute('disabled', 'true');
+      }
+      upgEl.setAttribute('aria-label', `Acheter ${upg.name} pour ${formatNumber(upg.cost)} cookies. Possédés : ${upg.owned}. ${affordable ? 'Disponible à l\'achat' : 'Non disponible'}`);
+      upgEl.innerHTML = `<span class="name">${upg.name}</span><span class="cost">${formatNumber(upg.cost)}</span>`;
+      upgEl.onclick = () => buyUpgrade(upg.id);
+      upgradesContainer.appendChild(upgEl);
+    });
+  }
+
+  function buyUpgrade(id) {
+    const upg = upgrades.find(u => u.id === id);
+    if(!upg || cookies < upg.cost) return;
+    if(upg.maxOwned && upg.owned >= upg.maxOwned) {
+      showMessage(`Vous avez atteint la limite pour ${upg.name}`, true);
+      return;
+    }
+    cookies -= upg.cost;
+    upg.owned++;
+
+    if(id === 'key') {
+      keysOwned++;
+      if(!zoneUnlocked) {
+        zoneUnlocked = true;
+        secretZone.style.display = 'block';
+        showMessage('Zone secrète déverrouillée! Cliquez dessus pour 20 000 cookies!', false);
+      } else {
+        showMessage('Clé achetée! Vous possédez ' + keysOwned + ' clés.', false);
+      }
+    } else {
+      baseCookiesPerClick += upg.cpcInc;
+      baseCookiesPerSecond += upg.cpsInc;
+      updateCookiesRates();
+      showMessage(`Achat réussi : ${upg.name}`, false);
+    }
+    // Increase cost with exponential growth and slight randomness
+    upg.cost = Math.ceil(upg.baseCost * Math.pow(1.15, upg.owned) * (0.95 + Math.random() * 0.1));
+    updateCookieCount();
+    renderUpgrades();
+  }
+
+  function updateCookiesRates() {
+    if(boostActive) {
+      cookiesPerClick = baseCookiesPerClick * multiplier;
+      cookiesPerSecond = baseCookiesPerSecond * multiplier;
+    } else {
+      cookiesPerClick = baseCookiesPerClick;
+      cookiesPerSecond = baseCookiesPerSecond;
+    }
+    updateStats();
+  }
+
+  cookieButton.addEventListener('click', () => {
+    cookies += cookiesPerClick;
+    updateCookieCount();
+
+    cookieButton.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+      cookieButton.style.transform = 'scale(1)';
+    }, 100);
+
+    renderUpgrades();
+  });
+
+  // Secret zone interaction: grants 20,000 cookies times multiplier
+  secretZone.addEventListener('click', () => {
+    if(!zoneUnlocked) return;
+    const gain = 20000 * multiplier;
+    cookies += gain;
+    updateCookieCount();
+    showMessage(`Zone secrète: +${formatNumber(gain)} cookies! `, false);
+
+    // Animate zone quickly
+    secretZone.style.transform = 'scale(1.1)';
+    setTimeout(() => {
+      secretZone.style.transform = 'scale(1)';
+    }, 200);
+
+    renderUpgrades();
+  });
+
+  // Support keyboard activation for accessibility on secret zone
+  secretZone.addEventListener('keydown', e => {
+    if(e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      secretZone.click();
+    }
+  });
+
+  setInterval(() => {
+    if(cookiesPerSecond > 0) {
+      cookies += cookiesPerSecond / 10;
+      updateCookieCount();
+      renderUpgrades();
+    }
+  }, 100);
+
+  let msgTimeout;
+  function showMessage(text, isError=false) {
+    clearTimeout(msgTimeout);
+    if(isError) {
+      messageElem.style.color = '#ff5555';
+      messageElem.style.textShadow = '1px 1px 2px #660000';
+    } else {
+      messageElem.style.color = '#ffeeaa';
+      messageElem.style.textShadow = '1px 1px 2px #825d00';
+    }
+    messageElem.textContent = text;
+    msgTimeout = setTimeout(() => {
+      messageElem.textContent = '';
+    }, 4000);
+  }
+
+  function updateStats() {
+    statsElem.innerHTML = `
+      <div>Cookies par clic : <strong>${formatNumber(cookiesPerClick)}</strong></div>
+      <div>Cookies par seconde : <strong>${formatNumber(cookiesPerSecond)}</strong></div>
+      <div>Boosts disponibles : <strong>${boostsAvailable}</strong></div>
+      <div>Boost actif : <strong>${boostActive ? 'Oui' : 'Non'}</strong></div>
+      <div>Cooldown boost : <strong>${boostCooldown > 0 ? (Math.ceil(boostCooldown/1000) + 's') : 'Prêt'}</strong></div>
+      <div>Clés possédées : <strong>${keysOwned}</strong></div>
+      <div>Zone secrète : <strong>${zoneUnlocked ? 'Déverrouillée' : 'Verrouillée'}</strong></div>
+    `;
+  }
+
+  function activateBoost() {
+    if(boostActive) {
+      showMessage('Boost déjà actif!', true);
+      return;
+    }
+    if(boostCooldown > 0) {
+      showMessage(`Boost en cooldown. Patientez ${Math.ceil(boostCooldown/1000)} secondes.`, true);
+      return;
+    }
+    if(boostsAvailable <= 0) {
+      showMessage('Pas de boosts disponibles.', true);
+      return;
+    }
+    boostsAvailable--;
+    boostActive = true;
+    multiplier = 2;
+    updateCookiesRates();
+    updateStats();
+    showMessage('BOOST activé x2 cookies pendant 30 secondes!');
+    boostButton.disabled = true;
+
+    setTimeout(() => {
+      boostActive = false;
+      multiplier = 1;
+      updateCookiesRates();
+      updateStats();
+      showMessage('BOOST terminé.');
+      boostCooldown = boostCooldownMs;
+      const cooldownInterval = setInterval(() => {
+        boostCooldown -= 1000;
+        updateStats();
+        if(boostCooldown <= 0) {
+          clearInterval(cooldownInterval);
+          boostButton.disabled = false;
+          showMessage('Boost prêt à être utilisé!');
+        }
+      }, 1000);
+    }, boostDurationMs);
+  }
+
+  boostButton.addEventListener('click', activateBoost);
+
+  updateCookiesRates();
+  updateCookieCount();
+  renderUpgrades();
+  updateStats();
+
+  // Hide secret zone initially
+  if(zoneUnlocked) {
+    secretZone.style.display = 'block';
+  } else {
+    secretZone.style.display = 'none';
+  }
+})();
+</script>
+</body>
+</html>
+</content>
+</create_file>
+
+<attempt_completion>
+
+</attempt_completion>
